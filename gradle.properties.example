@@ -1,0 +1,6 @@
+# Optional local Gradle settings.
+# Copy this to gradle.properties if your IDE/Gradle needs an explicit Java 11 path.
+# Do not commit gradle.properties; it is machine-specific.
+#
+# org.gradle.java.home=C:/Program Files/AdoptOpenJDK/jdk-11.0.8.10-hotspot
+

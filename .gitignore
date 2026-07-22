@@ -1,0 +1,43 @@
+# Build output
+build/
+out/
+target/
+
+# Gradle local state
+.gradle/
+gradle.properties
+
+# IDE/editor local state
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# OS/user files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Local secrets/config
+.env
+.env.*
+!.env.example
+*secret*
+*secrets*
+*.key
+*.pem
+*.p12
+*.jks
+
+# Private release documents maintained outside the public repository
+/LIVE_TEST_CHECKLIST.md
+/COMPLIANCE_AUDIT.md
+/PROJECT_STATUS.md
+/RELEASE_READINESS.md
+
