@@ -79,7 +79,7 @@ is performed by the plugin.
 | `point_icons/twisted.png` | https://oldschool.runescape.wiki/w/File:Twisted_potion_(4).png | Jagex game media, used with permission. |
 | `point_icons/xerics_aid.png` | https://oldschool.runescape.wiki/w/File:Xeric%27s_aid_(4).png | Jagex game media, used with permission. |
 | `room_icons/guardian.png` | https://oldschool.runescape.wiki/w/File:Guardian_(Chambers_of_Xeric,_male).png | Proportional downscale of Jagex game media, used with permission. |
-| `room_icons/ice_demon.png` | https://oldschool.runescape.wiki/w/File:Ice_demon.png | Jagex game media, used with permission. |
+| `room_icons/ice_demon.png` | https://oldschool.runescape.wiki/w/File:Ice_demon.png | Proportional downscale of Jagex game media, used with permission. |
 | `room_icons/mystics.png` | https://oldschool.runescape.wiki/w/File:Skeletal_mystic_(1).png | Proportional downscale of Jagex game media, used with permission. |
 | `room_icons/olm.png` | https://oldschool.runescape.wiki/w/File:Great_Olm_icon_(mobile).png | Proportional downscale of Jagex game media, used with permission. |
 | `room_icons/rope_mager.png` | https://oldschool.runescape.wiki/w/File:Deathly_mage.png | Proportional downscale of Jagex game media, used with permission. |
