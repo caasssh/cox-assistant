@@ -225,9 +225,9 @@ final class RaidSummaryLogger implements AutoCloseable
         {
             writer.awaitTermination(2, TimeUnit.SECONDS);
         }
-        catch (InterruptedException interrupted)
+        catch (InterruptedException ignored)
         {
-            Thread.currentThread().interrupt();
+            // The client is already shutting down; any queued log write may be abandoned.
         }
     }
 

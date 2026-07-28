@@ -307,9 +307,9 @@ final class PointFixtureLogger implements AutoCloseable
         {
             writer.awaitTermination(2, TimeUnit.SECONDS);
         }
-        catch (InterruptedException interrupted)
+        catch (InterruptedException ignored)
         {
-            Thread.currentThread().interrupt();
+            // The client is already shutting down; any queued fixture write may be abandoned.
         }
     }
 
