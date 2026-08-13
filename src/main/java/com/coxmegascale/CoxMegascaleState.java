@@ -18,6 +18,11 @@ import net.runelite.api.ItemContainer;
 import net.runelite.api.ItemID;
 import net.runelite.client.party.PartyMember;
 
+/**
+ * Mutable raid model shared by client-event handlers, infoboxes, and Swing.
+ * It owns room/point attribution, preparation accounting, confirmed defence
+ * progress, bounded Party snapshots, and the reset boundaries between raids.
+ */
 public class CoxMegascaleState
 {
     public static final int MAX_POTION_TARGET = 999;
@@ -33,6 +38,8 @@ public class CoxMegascaleState
     private static final int MAX_DEFENCE_TRACKERS = 256;
     private static final long MAX_SHARED_STORAGE_FUTURE_MILLIS = 60_000;
 
+    // Central item catalogs define every inventory/storage value the plugin may
+    // count or share; unrelated items are ignored.
     private static final List<Resource> RESOURCES = Collections.unmodifiableList(Arrays.asList(
         new Resource("Noxifer", ItemID.NOXIFER, ItemID.GRIMY_NOXIFER),
         new Resource("Golpar", ItemID.GOLPAR, ItemID.GRIMY_GOLPAR),
@@ -77,18 +84,24 @@ public class CoxMegascaleState
     ));
     private static final Map<Integer, Integer> TRACKED_INVENTORY_INDEX = buildTrackedInventoryIndex();
 
+    // Local preparation is split by provenance before being combined into the
+    // displayed collected totals.
     private final Map<String, Integer> collectedCounts = new LinkedHashMap<>();
     private final Map<String, Integer> inventoryResourceCounts = new LinkedHashMap<>();
     private final Map<String, Integer> privateStorageResourceCounts = new LinkedHashMap<>();
     private final Map<String, Integer> sharedStorageCounts = new LinkedHashMap<>();
     private final Map<String, Integer> lastPotionCounts = new LinkedHashMap<>();
     private final Map<String, Integer> craftedPotionCounts = new LinkedHashMap<>();
+    // Live raid histories and compatible Party state are bounded/sanitized at
+    // their update methods below.
     private final List<TrackedRoomPoints> trackedRoomPoints = new java.util.ArrayList<>();
     private final List<DeathPointLoss> deathPointLosses = new java.util.ArrayList<>();
     private final List<TeamDeath> localTeamDeaths = new ArrayList<>();
     private final Map<Long, TeamMember> teamMembers = new LinkedHashMap<>();
     private final Set<Long> syncedPartyMemberIds = new HashSet<>();
     private final Map<String, Integer> localFishEaten = new LinkedHashMap<>();
+    // Legacy Mystics counters coexist with the per-target defence model used by
+    // menu entries and Party-shared confirmed hits.
     private final Map<String, Integer> mysticsSpecTargets = new LinkedHashMap<>();
     private final Map<String, Integer> mysticsSpecRemaining = new LinkedHashMap<>();
     private final Map<String, DefenceTracker> defenceTrackers = new LinkedHashMap<>();
@@ -209,6 +222,8 @@ public class CoxMegascaleState
 
     public int getTarget(Resource resource)
     {
+        // Secondary targets include ingredients consumed by planned overloads;
+        // herb targets reflect finished potion requirements.
         if ("Noxifer".equals(resource.key))
         {
             return getOverloadsPerKiller();
@@ -344,6 +359,8 @@ public class CoxMegascaleState
 
     public boolean setCurrentPoints(int personalPoints, int groupPoints)
     {
+        // ActorDeath and point varbits may arrive in either order. Store both
+        // observations and correlate a nearby personal loss exactly once.
         boolean localDeathRecorded = false;
         this.currentPersonalPoints = Math.max(0, personalPoints);
         this.currentGroupPoints = Math.max(0, groupPoints);
@@ -373,6 +390,8 @@ public class CoxMegascaleState
 
     public void resetPointTracking()
     {
+        // Clear raid-local histories while retaining user preparation targets
+        // and other session options.
         trackedRoomPoints.clear();
         deathPointLosses.clear();
         localTeamDeaths.clear();
@@ -407,6 +426,8 @@ public class CoxMegascaleState
 
     public void startRoom(String roomName)
     {
+        // Closing first snapshots the prior room's final delta before new points
+        // can be attributed to the incoming room.
         if (roomName == null || roomName.isEmpty() || roomName.equals(activeRoomName))
         {
             return;
@@ -437,6 +458,8 @@ public class CoxMegascaleState
         {
             return;
         }
+        // Remove separately tracked consumable points so eating/drinking during
+        // combat does not inflate that room's contribution.
         int personal = Math.max(0, currentPersonalPoints - activeRoomStartPersonalPoints
             - (getLocalConsumablePoints() - activeRoomStartPersonalConsumablePoints));
         int group = Math.max(0, currentGroupPoints - activeRoomStartGroupPoints
@@ -527,6 +550,8 @@ public class CoxMegascaleState
 
     public void configureMysticsSpecTracker(int scale, boolean useEmberlight, boolean chickenRoute)
     {
+        // Preserve confirmed progress across ordinary UI refreshes; recompute
+        // only when an input that changes the route changes.
         if (mysticsTrackerScale == scale && mysticsUseEmberlight == useEmberlight && mysticsChickenRoute == chickenRoute)
         {
             return;
@@ -549,6 +574,8 @@ public class CoxMegascaleState
 
     public void activateDefenceTarget(String targetKey)
     {
+        // Create trackers lazily and cap their count so long raids or hostile
+        // target keys cannot grow state without bound.
         if (defenceTrackerScale <= 0 || !isValidDefenceTargetKey(targetKey))
         {
             return;
@@ -661,6 +688,8 @@ public class CoxMegascaleState
 
     public void observeOlmHeadSpawned()
     {
+        // Phase identity makes new Olm keys distinct from NPC indices reused
+        // after a wipe or transition.
         if ("Olm".equals(activeRoomName))
         {
             olmPhase++;
@@ -936,6 +965,8 @@ public class CoxMegascaleState
 
     public boolean syncTeamMembers(List<PartyMember> partyMembers)
     {
+        // Reconcile roster identity without inventing CoX data for clients that
+        // have not sent a compatible plugin snapshot.
         boolean changed = false;
         syncedPartyMemberIds.clear();
         Map<Long, TeamMember> orderedMembers = new LinkedHashMap<>();
@@ -1123,6 +1154,8 @@ public class CoxMegascaleState
         int overloadSips, int nonOverloadSips, List<CoxTeamUpdate.Fish> fishEaten, int thievingLevel,
         List<CoxTeamUpdate.ItemCount> prepResources, List<CoxTeamUpdate.ItemCount> craftedPotions)
     {
+        // Normalize all network-sourced strings, counts, points, and list lengths
+        // here before any panel or calculation consumes them.
         TeamMember member = teamMembers.computeIfAbsent(memberId, TeamMember::new);
         List<CoxTeamUpdate.Fish> safeFish = sanitizeFish(fishEaten);
         List<CoxTeamUpdate.Death> safeDeaths = sanitizeDeaths(deaths);
@@ -1346,6 +1379,8 @@ public class CoxMegascaleState
 
     private boolean recordPendingLocalDeath()
     {
+        // The time window tolerates client-event ordering while the assigned bit
+        // prevents one personal loss from being attached more than once.
         if (pendingLocalDeath == null || recentGroupLoss == null || recentGroupLoss.assigned
             || Math.abs(pendingLocalDeath.occurredAtMillis - recentGroupLoss.occurredAtMillis) > 10_000)
         {
@@ -1534,6 +1569,8 @@ public class CoxMegascaleState
 
     public boolean updateSharedStorage(List<CoxTeamUpdate.ItemCount> update, long observedAtMillis, long sourceMemberId)
     {
+        // Reject far-future clocks and use timestamp/member id as a deterministic
+        // tie-breaker. Received snapshots are never rebroadcast by the plugin.
         if (update == null || !validSharedStorageObservationTime(observedAtMillis, System.currentTimeMillis())
             || observedAtMillis < sharedStorageObservedAtMillis
             || (observedAtMillis == sharedStorageObservedAtMillis && sourceMemberId >= sharedStorageSourceMemberId))
@@ -1614,6 +1651,8 @@ public class CoxMegascaleState
 
     public boolean observeInventory(ItemContainer inventory)
     {
+        // Count current resources directly, then credit confirmed crafted
+        // potions so converting ingredients does not make prep progress regress.
         if (inventory == null)
         {
             return false;

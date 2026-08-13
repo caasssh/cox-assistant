@@ -17,7 +17,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-/** Writes one local, human-readable JSON summary after each completed raid. */
+/**
+ * Writes one local, human-readable JSON summary after each completed raid.
+ * Unlike anonymous point fixtures, summaries intentionally retain the display
+ * names observed in the raid roster; they remain local and are documented as
+ * private files in the README. All disk work runs on one daemon thread.
+ */
 final class RaidSummaryLogger implements AutoCloseable
 {
     private static final DateTimeFormatter FILE_TIME = DateTimeFormatter
@@ -38,6 +43,8 @@ final class RaidSummaryLogger implements AutoCloseable
 
     void write(Snapshot snapshot)
     {
+        // Serialize before queueing so the immutable snapshot is never read by a
+        // writer concurrently with plugin state changes.
         if (snapshot == null)
         {
             return;
@@ -64,6 +71,8 @@ final class RaidSummaryLogger implements AutoCloseable
 
     static String toJson(Snapshot snapshot)
     {
+        // JSON is emitted explicitly to keep the plugin dependency-free and the
+        // exact local data schema reviewable in this file.
         StringBuilder json = new StringBuilder(2_048);
         json.append("{\n");
         field(json, 1, "schemaVersion", 1, true);

@@ -9,6 +9,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Pure calculation layer for scaled NPC stats, supported-room point estimates,
+ * Olm/consumable totals, and capped purple-roll probabilities. Returned view
+ * models are immutable so Swing can render them without touching client state.
+ */
 public class RaidMath
 {
     public static final String PUZZLE_ICE_DEMON = "iceDemon";
@@ -37,6 +42,8 @@ public class RaidMath
     public synchronized List<StatSection> calculateNpcStats(int scale)
     {
         assertPositiveInteger(scale, "Scale");
+        // NPC tables are expensive but depend only on scale; reuse the immutable
+        // result across selective sidebar refreshes.
         if (cachedNpcStatsScale == scale)
         {
             return cachedNpcStats;
@@ -72,6 +79,8 @@ public class RaidMath
 
     public RoomPoints calculateRoomPoints(int scale, RaidOptions options)
     {
+        // Presence flags come from the scout. Unsupported or absent rooms are
+        // never silently added to the displayed supported estimate.
         assertPositiveInteger(scale, "Scale");
         RaidOptions safeOptions = options == null ? RaidOptions.defaults(scale) : options;
         List<String> selectedPuzzles = safeOptions.selectedPuzzles();
@@ -288,6 +297,8 @@ public class RaidMath
             throw new IllegalArgumentException("Points cannot be negative.");
         }
         List<Double> rollProbabilities = new ArrayList<>();
+        // CoX caps eligibility at six point chunks; excess points remain visible
+        // in the result but cannot create additional potential rolls.
         int eligiblePoints = Math.min(points, POINTS_PER_POTENTIAL_ROLL * MAX_POTENTIAL_ROLLS);
         int remaining = eligiblePoints;
         while (remaining > 0 && rollProbabilities.size() < MAX_POTENTIAL_ROLLS)
@@ -323,6 +334,8 @@ public class RaidMath
 
     public double valueFromAnchors(List<Anchor> anchors, int scale)
     {
+        // Exact anchors win; values between or outside anchors use the nearest
+        // linear segment so every supported scale produces a deterministic value.
         if (anchors == null || anchors.isEmpty())
         {
             return 0;
@@ -387,6 +400,8 @@ public class RaidMath
 
     private static List<Double> poissonBinomial(List<Double> probabilities)
     {
+        // distribution[i] stores the probability of exactly i successes after
+        // processing the rolls seen so far.
         List<Double> distribution = new ArrayList<>();
         distribution.add(1.0);
         for (double probability : probabilities)

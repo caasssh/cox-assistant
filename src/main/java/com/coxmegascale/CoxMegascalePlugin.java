@@ -86,6 +86,14 @@ import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.Text;
 import net.runelite.client.util.LinkBrowser;
 
+/**
+ * RuneLite lifecycle and event coordinator for CoX Assistant.
+ *
+ * <p>The plugin observes public client events, updates {@link CoxMegascaleState},
+ * exchanges raid-scoped Party snapshots, writes explicitly documented local
+ * logs, and requests targeted sidebar refreshes. It never generates gameplay
+ * input or changes game state.</p>
+ */
 @PluginDescriptor(
     name = "CoX Assistant",
     description = "Informational Chambers of Xeric sidebar for scouting, estimates, points, prep, NPC stats, defence specs, Olm, and Party tracking.",
@@ -145,10 +153,14 @@ public class CoxMegascalePlugin extends Plugin
     @Inject
     private WSClient partyWebsocket;
 
+    // Long-lived models and bounded collections survive selective UI rebuilds;
+    // explicit raid/logout/shutdown handlers reset their scoped contents.
     private final RaidRoomDetector detector = new RaidRoomDetector();
     private final CoxMegascaleState state = new CoxMegascaleState();
     private final List<CoxMegascaleResourceInfoBox> resourceInfoBoxes = new ArrayList<>();
     private final List<CoxMegascaleMysticsSpecInfoBox> mysticsSpecInfoBoxes = new ArrayList<>();
+    // One special can emit multiple delayed hitsplats. Keep a single pending
+    // attempt and collect only local hits in its bounded confirmation window.
     private final List<Integer> pendingMysticsHits = new ArrayList<>();
     private final Map<Long, Integer> lastRosterSnapshotResponseTick = new HashMap<>();
     private final LinkedHashSet<String> raidParticipantNames = new LinkedHashSet<>();
@@ -186,6 +198,8 @@ public class CoxMegascalePlugin extends Plugin
     @Override
     protected void startUp()
     {
+        // Construct local writers and register Party payloads before the first
+        // state snapshot can be observed or sent.
         pointFixtureLogger = new PointFixtureLogger(config.pointFixtureLogging(), RuneLite.RUNELITE_DIR.toPath());
         raidSummaryLogger = new RaidSummaryLogger(RuneLite.RUNELITE_DIR.toPath());
         infoBoxesEnabled = config.showInfoBoxes();
@@ -225,6 +239,8 @@ public class CoxMegascalePlugin extends Plugin
     @Override
     protected void shutDown()
     {
+        // RuneLite can disable/re-enable a plugin in one client session, so all
+        // UI, Party registrations, pending observations, and writers are detached.
         if (raidSummaryLogger != null)
         {
             raidSummaryLogger.close();
@@ -324,6 +340,8 @@ public class CoxMegascalePlugin extends Plugin
 
     private void handleCoxTeamUpdate(CoxTeamUpdate event)
     {
+        // Schema compatibility and matching CoX party identity are both required
+        // before any remote gameplay-derived field reaches shared state.
         if (!compatiblePartySchema(event.schemaVersion, CoxTeamUpdate.SCHEMA_VERSION))
         {
             if (state.clearTeamMemberCoxData(event.getMemberId(), null) && panel != null)
@@ -391,6 +409,8 @@ public class CoxMegascalePlugin extends Plugin
 
     private void updatePointFixtureLogging()
     {
+        // Recreate the writer on configuration changes so disabling closes the
+        // active session and enabling mid-raid starts with explicit provenance.
         if (pointFixtureLogger != null)
         {
             pointFixtureLogger.close();
@@ -510,6 +530,8 @@ public class CoxMegascalePlugin extends Plugin
             return;
         }
 
+        // Finalize only after every accepted same-attempt hitsplat has had time
+        // to arrive; zero/expired attempts never change or share defence state.
         int amount = confirmedMysticsSpecAmount();
         String weapon = pendingMysticsSpec.weapon;
         String targetKey = pendingMysticsSpec.targetKey;
@@ -537,6 +559,8 @@ public class CoxMegascalePlugin extends Plugin
 
     private void updateRaidState()
     {
+        // This is the single once-per-game-tick reconciliation point. Party
+        // sends and tab refreshes remain gated on specific observable changes.
         Integer scaledPartySize = findScaledPartySize();
         if (scaledPartySize != null && !Objects.equals(lastDetectedScale, scaledPartySize))
         {
@@ -619,6 +643,8 @@ public class CoxMegascalePlugin extends Plugin
     @Subscribe
     public void onItemContainerChanged(ItemContainerChanged event)
     {
+        // Container identity distinguishes inventory, private storage, and the
+        // dynamically discovered shared-storage container without polling them.
         if (event.getContainerId() == InventoryID.INVENTORY.getId())
         {
             boolean consumed = confirmPendingConsumable(event.getItemContainer());
@@ -728,6 +754,8 @@ public class CoxMegascalePlugin extends Plugin
 
     private void ensurePointFixtureSession(int groupPoints, int personalPoints)
     {
+        // Delay file sessions until raid identity, scout/mode, and detected scale
+        // are all known; this prevents partial or duplicate calibration files.
         boolean scoutReady = scoutedRaid != null || "challenge".equals(raidMode);
         if (!canOpenPointFixture(
             pointFixtureLogger != null,
@@ -825,6 +853,8 @@ public class CoxMegascalePlugin extends Plugin
 
     private Raid buildRaidFromInstance()
     {
+        // Mirror RuneLite's public raid-grid model from scene/template data for
+        // Challenge Mode, which does not emit RaidScouted.
         Point lobbyBase = findLobbyBase();
         if (lobbyBase == null)
         {
@@ -1040,6 +1070,8 @@ public class CoxMegascalePlugin extends Plugin
 
     private void applyRaidScout(Raid raid)
     {
+        // Normalize both ordered solver layouts and flat room collections into
+        // the same state representation consumed by detection, points, and UI.
         scoutedRaid = raid;
         state.setPrepInfoBoxesHidden(false);
         List<com.coxmegascale.detect.RaidRoom> rooms = new ArrayList<>();
@@ -1476,6 +1508,8 @@ public class CoxMegascalePlugin extends Plugin
 
     private void queueConsumableConfirmation(int itemId, boolean fish)
     {
+        // A click alone can be cancelled. Record the pre-click dose/unit count
+        // and wait for a matching inventory reduction before awarding progress.
         ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
         int beforeUnits = CoxMegascaleState.consumableUnits(inventory, itemId);
         if (beforeUnits > 0)
@@ -1565,6 +1599,8 @@ public class CoxMegascalePlugin extends Plugin
         String displayName = localPlayer == null ? localMember.getDisplayName() : localPlayer.getName();
         boolean inCoxRaid = client.getVarbitValue(VarbitID.RAIDS_CLIENT_INDUNGEON) == 1;
         int raidPartyId = currentCoxRaidPartyId();
+        // Outside a raid send only an empty versioned presence payload; names and
+        // gameplay-derived fields are retained locally rather than broadcast.
         if (!inCoxRaid || raidPartyId == -1)
         {
             state.clearTeamMemberCoxData(localMember.getMemberId(), displayName);
@@ -1578,6 +1614,8 @@ public class CoxMegascalePlugin extends Plugin
         }
 
         int thievingLevel = client.getRealSkillLevel(Skill.THIEVING);
+        // Relay shared storage only from the client that directly observed the
+        // current snapshot, preventing received messages from echoing forever.
         boolean ownsSharedStorageSnapshot = locallyObservedSharedStorageAtMillis > 0
             && locallyObservedSharedStorageAtMillis == state.getSharedStorageObservedAtMillis();
         CoxTeamUpdate update = new CoxTeamUpdate(displayName, state.getCurrentPersonalPoints(), state.getActiveRoomName(), deaths,
@@ -1606,6 +1644,8 @@ public class CoxMegascalePlugin extends Plugin
 
     private boolean shouldRespondToRosterRequest(long memberId)
     {
+        // Rate-limit each sender and bound the deduplication map against abusive
+        // or malformed request bursts.
         int tick = client.getTickCount();
         Integer lastResponseTick = lastRosterSnapshotResponseTick.get(memberId);
         if (!rosterSnapshotRequestAllowed(tick, lastResponseTick))
@@ -1739,6 +1779,8 @@ public class CoxMegascalePlugin extends Plugin
         {
             return;
         }
+        // Weapon-specific travel time and expiry windows associate only the
+        // resulting local hitsplats with this observed special-energy use.
         int delay = specHitsplatDelay(weapon);
         int hitsplatTick = specialTick + delay;
         state.activateDefenceTarget(targetKey);
@@ -1748,6 +1790,8 @@ public class CoxMegascalePlugin extends Plugin
 
     private String defenceTargetKey(NPC target)
     {
+        // Ordinary bosses use profile plus NPC index; Olm adds encounter/phase
+        // identity in state so reused NPC indices cannot inherit stale drains.
         String targetName = target.getName();
         if (targetName == null)
         {
@@ -1867,6 +1911,8 @@ public class CoxMegascalePlugin extends Plugin
         }
         if ("Ralos".equals(weapon))
         {
+            // Ralos projectiles roll independently, so count positive hits rather
+            // than summing their damage values.
             int successfulHits = 0;
             for (int hit : hits)
             {

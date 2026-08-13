@@ -7,6 +7,11 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.ui.overlay.infobox.InfoBox;
 import net.runelite.client.ui.overlay.infobox.InfoBoxPriority;
 
+/**
+ * Conditional infobox for one weapon in the active Mystics defence plan. The
+ * supplied visibility gate keeps global, raid, and scout requirements in the
+ * plugin coordinator instead of duplicating them here.
+ */
 public class CoxMegascaleMysticsSpecInfoBox extends InfoBox
 {
     private final CoxMegascaleState state;

@@ -14,6 +14,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+/** Verifies the explicit local raid-summary schema and JSON escaping. */
 public class RaidSummaryLoggerTest
 {
     @Test

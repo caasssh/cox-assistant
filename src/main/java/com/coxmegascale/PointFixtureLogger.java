@@ -12,7 +12,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-/** Opt-in, local-only anonymous JSONL recorder for calibrating raid points. */
+/**
+ * Opt-in, local-only anonymous JSONL recorder for calibrating raid points.
+ * Records contain bounded raid metadata and relative timing, never display
+ * names, account/session data, chat, coordinates, or wall-clock timestamps.
+ * Disk writes run on one daemon thread so I/O cannot block the client thread.
+ */
 final class PointFixtureLogger implements AutoCloseable
 {
     static final int SCHEMA_VERSION = 2;
@@ -45,6 +50,7 @@ final class PointFixtureLogger implements AutoCloseable
 
     void startRaid(Metadata metadata, int groupPoints, int personalPoints)
     {
+        // A random session id separates files without encoding player identity.
         synchronized (this)
         {
             if (!enabled || sessionId != null)
@@ -120,6 +126,7 @@ final class PointFixtureLogger implements AutoCloseable
             metadata = null;
             pendingStartLine = null;
         }
+        // Queue closure behind all pending records to preserve JSONL ordering.
         writer.execute(this::closeOutput);
     }
 
@@ -139,6 +146,8 @@ final class PointFixtureLogger implements AutoCloseable
             return;
         }
 
+        // Absolute totals make fixtures independently auditable while deltas are
+        // the values used to calibrate room boundaries and point sources.
         int groupDelta = groupPoints - lastGroupPoints;
         int personalDelta = personalPoints - lastPersonalPoints;
         lastGroupPoints = groupPoints;
@@ -219,6 +228,7 @@ final class PointFixtureLogger implements AutoCloseable
 
     private void pruneOldFiles(Path targetDirectory)
     {
+        // Retain at most 100 fixtures per raid mode to bound local disk usage.
         try (java.util.stream.Stream<Path> files = Files.list(targetDirectory))
         {
             java.util.List<Path> old = files
@@ -315,6 +325,7 @@ final class PointFixtureLogger implements AutoCloseable
 
     static final class Metadata
     {
+        // Construction bounds every caller-supplied value before persistence.
         final String raidMode;
         final String startReason;
         final String layoutCode;

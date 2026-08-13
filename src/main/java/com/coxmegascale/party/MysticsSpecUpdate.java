@@ -2,6 +2,11 @@ package com.coxmegascale.party;
 
 import net.runelite.client.party.messages.PartyMemberMessage;
 
+/**
+ * Versioned Party message for one confirmed defence-reduction result. The
+ * legacy name remains for compatibility although target keys cover multiple
+ * supported CoX NPC profiles.
+ */
 public class MysticsSpecUpdate extends PartyMemberMessage
 {
     public static final int SCHEMA_VERSION = 1;

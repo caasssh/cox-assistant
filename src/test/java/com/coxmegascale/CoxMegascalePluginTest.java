@@ -23,6 +23,10 @@ import org.junit.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Integration-style coverage for plugin loading, raid lifecycle, event timing,
+ * Party scoping, consumable confirmation, and per-target defence tracking.
+ */
 public class CoxMegascalePluginTest
 {
     @Test

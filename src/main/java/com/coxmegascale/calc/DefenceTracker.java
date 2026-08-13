@@ -4,7 +4,11 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Passive model of one CoX target's remaining Defence-reduction work. */
+/**
+ * Passive model of one CoX target's confirmed Defence-reduction progress.
+ * Initial scaled stats stay immutable while each accepted hit updates current
+ * Defence, menu color, and the cached remaining-spec recommendation.
+ */
 public final class DefenceTracker
 {
     public static final String MENU_COLOR_FULL = "8fd3ff";
@@ -74,6 +78,8 @@ public final class DefenceTracker
 
     public boolean recordSpecHit(String weapon, int amount)
     {
+        // Amount represents projectile count for Ralos, damage for BGS/Ayak,
+        // and a positive-hit confirmation for percentage-based weapons.
         if (weapon == null || amount <= 0 || currentDefence == 0)
         {
             return false;
@@ -118,6 +124,8 @@ public final class DefenceTracker
 
     private Map<String, Integer> planRemainingSpecs()
     {
+        // Cache the immutable plan because menu rendering reads it repeatedly;
+        // it is invalidated only when a confirmed hit changes Defence.
         Map<String, Integer> plan = specPlanner.planRemainingDefence(profileKey, currentDefence, baseMagic);
         return plan.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(new LinkedHashMap<>(plan));
     }

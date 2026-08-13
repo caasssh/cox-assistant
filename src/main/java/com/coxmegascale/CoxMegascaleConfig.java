@@ -5,6 +5,10 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.Range;
 
+/**
+ * Persistent RuneLite settings for global visibility, local fixture logging,
+ * welcome-page behavior, and the defaults used to seed a new sidebar session.
+ */
 @ConfigGroup(CoxMegascaleConfig.GROUP)
 public interface CoxMegascaleConfig extends Config
 {
