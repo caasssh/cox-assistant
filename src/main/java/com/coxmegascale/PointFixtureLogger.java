@@ -317,9 +317,9 @@ final class PointFixtureLogger implements AutoCloseable
         {
             writer.awaitTermination(2, TimeUnit.SECONDS);
         }
-        catch (InterruptedException interrupted)
+        catch (InterruptedException ignored)
         {
-            Thread.currentThread().interrupt();
+            // RuneLite is already shutting down; queued fixture writes may be abandoned.
         }
     }
 
