@@ -234,9 +234,9 @@ final class RaidSummaryLogger implements AutoCloseable
         {
             writer.awaitTermination(2, TimeUnit.SECONDS);
         }
-        catch (InterruptedException interrupted)
+        catch (InterruptedException ignored)
         {
-            Thread.currentThread().interrupt();
+            // RuneLite is already shutting down; queued summary writes may be abandoned.
         }
     }
 
