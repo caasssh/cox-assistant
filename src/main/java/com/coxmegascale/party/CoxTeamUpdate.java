@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import net.runelite.client.party.messages.PartyMemberMessage;
 
+/**
+ * Versioned RuneLite Party snapshot for the Team tab and shared preparation
+ * state. Receivers accept the payload only when its schema and CoX raid identity
+ * match, then sanitize every remote list and numeric field before display.
+ */
 public class CoxTeamUpdate extends PartyMemberMessage
 {
     public static final int SCHEMA_VERSION = 1;
@@ -56,6 +61,7 @@ public class CoxTeamUpdate extends PartyMemberMessage
         this.requestRosterSnapshot = requestRosterSnapshot;
     }
 
+    /** One confirmed local raid death and its observed personal-point loss. */
     public static class Death
     {
         public String room;
@@ -74,6 +80,7 @@ public class CoxTeamUpdate extends PartyMemberMessage
         }
     }
 
+    /** Aggregated consumed count and point value for one CoX fish tier. */
     public static class Fish
     {
         public String name;
@@ -92,6 +99,7 @@ public class CoxTeamUpdate extends PartyMemberMessage
         }
     }
 
+    /** Named non-negative count used by bounded prep and storage snapshots. */
     public static class ItemCount
     {
         public String name;

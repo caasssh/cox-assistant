@@ -1,5 +1,6 @@
 package com.coxmegascale.detect;
 
+/** Canonical room categories recognized by entity-name fallback detection. */
 public enum RaidRoom
 {
     GUARDIANS("Guardians"),

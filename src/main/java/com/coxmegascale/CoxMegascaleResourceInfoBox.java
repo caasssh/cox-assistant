@@ -7,6 +7,10 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.ui.overlay.infobox.InfoBox;
 import net.runelite.client.ui.overlay.infobox.InfoBoxPriority;
 
+/**
+ * Preparation infobox for one tracked herb or secondary. It renders remaining
+ * work from shared state and hides itself when prep information is not relevant.
+ */
 public class CoxMegascaleResourceInfoBox extends InfoBox
 {
     private static final Color RED = new Color(255, 64, 64);

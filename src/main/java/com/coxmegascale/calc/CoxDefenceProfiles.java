@@ -28,6 +28,8 @@ final class CoxDefenceProfiles
             return Collections.emptyMap();
         }
 
+        // Defence and Magic use different CoX party-scaling factors; keep both
+        // derived values together so callers cannot mix scales or profiles.
         int partyFactor = (int) Math.sqrt(Math.max(0, scale - 1)) + ((scale - 1) * 7 / 10 + 100);
         int magicFactor = ((int) Math.sqrt(Math.max(0, scale - 1))) * 7 + scale + 99;
         Map<String, Integer> stats = new LinkedHashMap<>();

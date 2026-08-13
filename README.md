@@ -32,6 +32,49 @@ otherwise plays the game for you.
   consumables, each member's prep progress, and the most recently observed CoX
   shared-prep storage when RuneLite Party is available.
 
+## Screenshots and Usage
+
+### Welcome
+
+The welcome page gives new users a short tour, explains that projected values
+are estimates, and links to the project and community resources. It can be
+disabled after the first launch and reopened from the Options tab.
+
+![Welcome page](docs/screenshots/welcome.png)
+
+### Summary
+
+Summary is the at-a-glance raid view. Use it to confirm the detected layout and
+scale, review preparation targets and current resources, and follow the active
+NPC defence plan without leaving the main tab.
+
+![Summary tab](docs/screenshots/summary.png)
+
+### Points
+
+Points separates observed raid progress from supported-room estimates,
+consumable points, deaths, Olm projections, and purple-roll probabilities. The
+labels make clear when a value is an estimate rather than an exact game result.
+
+![Points tab](docs/screenshots/points.png)
+
+### Team
+
+When RuneLite Party is enabled, Team shows compatible members in the same CoX
+raid, including points, deaths, room state, consumables, personal preparation,
+and the latest shared-storage snapshot. Local features continue to work when no
+Party data is available.
+
+![Team tab](docs/screenshots/team.png)
+
+### Options
+
+Options contains raid-specific overrides for scale, levels, Olm killers,
+overloads, potion targets, and Mystics routes. It also provides the local log
+folder shortcut and controls whether the welcome page appears at startup.
+
+![Options tab](docs/screenshots/options.png)
+
 ## Estimates and Community Testing
 
 Values labelled as estimates are community-calibrated guidance, not guaranteed

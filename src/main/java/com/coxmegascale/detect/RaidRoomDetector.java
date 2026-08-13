@@ -6,6 +6,10 @@ import java.util.Locale;
 import java.util.Collection;
 import java.util.Set;
 
+/**
+ * Allocation-light fallback detector that accumulates unique rooms from public
+ * NPC and object names when a complete RuneLite scout is not yet available.
+ */
 public class RaidRoomDetector
 {
     private final EnumSet<RaidRoom> detectedRooms = EnumSet.noneOf(RaidRoom.class);
@@ -19,6 +23,8 @@ public class RaidRoomDetector
 
         String name = rawName.toLowerCase(Locale.ROOT);
         RaidRoom room = roomFromName(name);
+        // EnumSet.add reports whether the snapshot actually changed, allowing
+        // callers to suppress redundant sidebar refreshes.
         return room != null && detectedRooms.add(room);
     }
 
@@ -34,6 +40,7 @@ public class RaidRoomDetector
 
     public Set<RaidRoom> snapshot()
     {
+        // Consumers receive an immutable defensive copy, never the live set.
         return Collections.unmodifiableSet(EnumSet.copyOf(detectedRooms));
     }
 

@@ -7,6 +7,7 @@ import static org.junit.Assert.assertSame;
 import java.util.Collections;
 import org.junit.Test;
 
+/** Regression examples for scaling anchors, point estimates, caps, and odds. */
 public class RaidMathTest
 {
     private final RaidMath raidMath = new RaidMath();

@@ -36,6 +36,10 @@ import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.SpriteManager;
 import org.junit.Test;
 
+/**
+ * Swing regression coverage for selective refreshes, narrow layouts, icon
+ * alignment, controls, accessibility, and supported-estimate presentation.
+ */
 public class CoxMegascalePanelTest
 {
     @Test

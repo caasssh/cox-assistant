@@ -70,6 +70,11 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.LinkBrowser;
 
+/**
+ * Responsive RuneLite sidebar for Summary, Points, Team, Options, and Welcome.
+ * Public update methods marshal state-driven work onto Swing's event-dispatch
+ * thread; the panel renders supplied state and never reads the game client.
+ */
 public class CoxMegascalePanel extends PluginPanel
 {
     /**
@@ -106,6 +111,7 @@ public class CoxMegascalePanel extends PluginPanel
         "Thieving"
     );
 
+    // Pure calculators and shared state are reused across tab rebuilds.
     private final RaidMath raidMath = new RaidMath();
     private final SpecPlanner specPlanner = new SpecPlanner(raidMath);
     private final CoxMegascaleState state;
@@ -121,6 +127,8 @@ public class CoxMegascalePanel extends PluginPanel
     private final CardLayout cardLayout = new CardLayout();
     private final Map<String, JPanel> tabPanels = new LinkedHashMap<>();
     private final Map<String, JButton> tabButtons = new LinkedHashMap<>();
+    // Image and layout caches keep frequent selected-tab refreshes allocation-
+    // light and avoid repeated classpath/cache-backed resource decoding.
     private final Map<String, ImageIcon> selectedTabIcons = new HashMap<>();
     private final Map<String, ImageIcon> unselectedTabIcons = new HashMap<>();
     private final Map<String, ImageIcon> statIcons = new HashMap<>();
@@ -130,6 +138,8 @@ public class CoxMegascalePanel extends PluginPanel
     private final Map<String, Boolean> collapsedSections = new HashMap<>();
     private final List<Long> localTeamMemberOrder = new ArrayList<>();
     private final TransferHandler teamMemberTransferHandler = new TeamMemberTransferHandler();
+    // Dirty-tab tracking lets client events refresh only affected views; the
+    // timer coalesces bursts before one off-screen Swing rebuild.
     private final Object refreshLock = new Object();
     private final Set<String> dirtyTabs = new HashSet<>();
     private final Timer refreshTimer;
@@ -412,6 +422,8 @@ public class CoxMegascalePanel extends PluginPanel
 
     public void setDetectedScale(int scale)
     {
+        // Preserve a user override while remembering the latest automatic value
+        // for the Options tab's Use auto action.
         if (detectedScale != null && detectedScale == scale && (scaleOverrideActive || ((Integer) scaleSpinner.getValue()) == scale))
         {
             return;
@@ -504,6 +516,8 @@ public class CoxMegascalePanel extends PluginPanel
 
     private void requestRefresh(String... tabs)
     {
+        // Calls may originate outside the EDT. Mutate only the small dirty set
+        // under lock, then schedule the actual Swing work with invokeLater.
         synchronized (refreshLock)
         {
             if (tabs == null || tabs.length == 0)
@@ -564,6 +578,8 @@ public class CoxMegascalePanel extends PluginPanel
 
         int scale = (Integer) scaleSpinner.getValue();
         state.configureDefenceTracker(scale);
+        // Auto-fill Thieving only when every eligible Party member supplied a
+        // compatible level; otherwise keep the manual input enabled.
         boolean automaticThievingTotal = hasScoutedRoom("Thieving") && state.hasTeamThievingTotal();
         thievingSpinner.setEnabled(!automaticThievingTotal);
         thievingSpinner.setToolTipText(automaticThievingTotal
@@ -645,6 +661,8 @@ public class CoxMegascalePanel extends PluginPanel
 
     private RaidMath.RoomPoints calculatedRoomPoints(RaidMath.RaidOptions options)
     {
+        // Calculations depend solely on RaidOptions. Reuse the prior immutable
+        // result when unrelated Team or UI state triggers a refresh.
         if (cachedRaidOptions == null || !sameRaidOptions(cachedRaidOptions, options))
         {
             cachedRaidOptions = options;
@@ -1184,6 +1202,8 @@ public class CoxMegascalePanel extends PluginPanel
 
     private void buildTeamTab()
     {
+        // State has already rejected incompatible/out-of-raid payloads. This tab
+        // renders only compatible raid members in a local display order.
         JPanel panel = tabPanels.get("Team");
         JPanel team = addCollapsibleSection(panel, "Team");
         List<CoxMegascaleState.TeamMember> members = state.getTeamMembers();
@@ -1430,6 +1450,8 @@ public class CoxMegascalePanel extends PluginPanel
 
     private void buildSharedStorageGrid(JPanel shared)
     {
+        // Shared storage is an observational snapshot kept separate from each
+        // member's private preparation totals.
         JPanel items = prepGrid();
         for (CoxMegascaleState.Resource resource : state.getResources())
         {
@@ -1713,6 +1735,8 @@ public class CoxMegascalePanel extends PluginPanel
 
     private ImageIcon statIcon(String key)
     {
+        // Cache normalized icons by semantic key because every NPC-stat grid
+        // requests the same small set during rebuilds.
         ImageIcon cached = statIcons.get(key);
         if (cached != null)
         {

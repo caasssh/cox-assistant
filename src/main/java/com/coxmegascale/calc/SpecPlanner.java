@@ -6,6 +6,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Pure planning layer that converts scaled NPC stats into landed-hit defence
+ * routes. It never performs actions; the UI and live tracker consume its
+ * immutable recommendations after game events confirm results.
+ */
 public class SpecPlanner
 {
     private static final int MAGE_HAND_MAGIC_DEFENCE = 50;
@@ -24,6 +29,8 @@ public class SpecPlanner
 
     public List<SpecSummary> buildCoxSpecPlan(int scale, List<String> selectedPuzzles)
     {
+        // Only include conditional puzzle targets when that room is present in
+        // the selected scout, keeping plans aligned with the actual layout.
         Map<String, Map<String, Integer>> statsByRoom = getStatsByRoom(scale);
         List<String> roomKeys = new ArrayList<>();
         roomKeys.add("mystics");
@@ -134,6 +141,8 @@ public class SpecPlanner
             return ralosDrain <= 0 ? Collections.emptyMap() : single("Ralos", divideRoundUp(defence, ralosDrain));
         }
 
+        // Try each useful Elder Maul prefix and choose the lowest total number
+        // of landed Elder/Ralos hits from the target's current Defence.
         int maximumElders = "mystics".equals(roomKey) ? 2 : 10;
         int bestElders = 0;
         int bestRalos = Integer.MAX_VALUE;
@@ -201,6 +210,8 @@ public class SpecPlanner
         List<Plan> queue = new ArrayList<>();
         queue.add(best);
 
+        // Defence strictly decreases and maxDepth bounds future profiles with
+        // unexpected drains, so this breadth-first search has predictable cost.
         while (!queue.isEmpty())
         {
             Plan current = queue.remove(0);
@@ -266,6 +277,8 @@ public class SpecPlanner
 
     private synchronized Map<String, Map<String, Integer>> getStatsByRoom(int scale)
     {
+        // Stat interpolation is shared by multiple tabs and menu lookups; cache
+        // one immutable room map until the detected/manual scale changes.
         if (cachedStatsScale == scale)
         {
             return cachedStatsByRoom;
