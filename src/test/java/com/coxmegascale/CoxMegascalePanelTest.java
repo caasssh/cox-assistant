@@ -2,6 +2,7 @@ package com.coxmegascale;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -57,7 +58,6 @@ public class CoxMegascalePanelTest
             mock(SkillIconManager.class),
             true,
             show -> { },
-            () -> { },
             itemManager,
             spriteManager
         ));
@@ -419,11 +419,10 @@ public class CoxMegascalePanelTest
     }
 
     @Test
-    public void optionsViewLogsButtonRunsFolderAction() throws Exception
+    public void optionsDoesNotExposeRestrictedLogFolderOpener() throws Exception
     {
-        AtomicBoolean opened = new AtomicBoolean();
         CoxMegascalePanel panel = new CoxMegascalePanel(100, 0, 75, new CoxMegascaleState(),
-            () -> { }, mock(SkillIconManager.class), true, show -> { }, () -> opened.set(true));
+            () -> { }, mock(SkillIconManager.class), true, show -> { });
 
         SwingUtilities.invokeAndWait(() ->
         {
@@ -436,15 +435,13 @@ public class CoxMegascalePanelTest
                 refresh.setAccessible(true);
                 refresh.invoke(panel);
                 JButton button = findButton(panel, "View logs");
-                assertNotNull(button);
-                button.doClick();
+                assertNull(button);
             }
             catch (Exception exception)
             {
                 throw new RuntimeException(exception);
             }
         });
-        assertTrue(opened.get());
     }
 
     private static void setSpinnerValue(CoxMegascalePanel panel, String fieldName, int value) throws Exception

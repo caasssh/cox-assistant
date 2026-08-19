@@ -10,8 +10,6 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
 import javax.imageio.ImageIO;
 import java.util.ArrayList;
@@ -84,7 +82,6 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.Text;
-import net.runelite.client.util.LinkBrowser;
 
 /**
  * RuneLite lifecycle and event coordinator for CoX Assistant.
@@ -215,7 +212,6 @@ public class CoxMegascalePlugin extends Plugin
             skillIconManager,
             config.showWelcomeOnStartup(),
             show -> configManager.setConfiguration(CoxMegascaleConfig.GROUP, "showWelcomeOnStartup", show),
-            this::openLogsDirectory,
             itemManager,
             spriteManager
         );
@@ -2368,20 +2364,6 @@ public class CoxMegascalePlugin extends Plugin
         fixturePointObservationExpiryTick = Integer.MIN_VALUE;
         fixtureClosedForCurrentRaid = false;
         fixtureStartReason = "enabled_mid_raid";
-    }
-
-    private void openLogsDirectory()
-    {
-        Path logsDirectory = RuneLite.RUNELITE_DIR.toPath().resolve("cox-assistant");
-        try
-        {
-            Files.createDirectories(logsDirectory);
-        }
-        catch (IOException ignored)
-        {
-            // LinkBrowser will offer to copy the path if the folder cannot be opened.
-        }
-        LinkBrowser.open(logsDirectory.toString());
     }
 
     static Integer parseScaledPartySize(String text)
