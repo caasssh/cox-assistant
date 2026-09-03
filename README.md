@@ -62,8 +62,11 @@ labels make clear when a value is an estimate rather than an exact game result.
 
 When RuneLite Party is enabled, Team shows compatible members in the same CoX
 raid, including points, deaths, room state, consumables, personal preparation,
-and the latest shared-storage snapshot. Local features continue to work when no
-Party data is available.
+and the latest shared-storage snapshot. Prep begins with an expanded Total grid
+that sums the preparation and crafted potions reported by compatible members of
+your current RuneLite Party. Shared Storage remains separate so deposited items
+are not counted twice. Local features continue to work when no Party data is
+available.
 
 ![Team tab](docs/screenshots/team.png)
 
@@ -140,6 +143,12 @@ tracked
 raid herbs, secondaries, and Chambers potions; it does not include gear or
 unrelated bank contents. Other Party members appear only when they run a
 compatible plugin version and report the same CoX raid.
+
+RuneLite Party messages are scoped to one Party passphrase. If raiders and
+preppers use two different RuneLite Parties in the same CoX raid, each Party has
+its own independent Team list and Total; neither group receives the other
+Party's snapshots. A single combined Total requires everyone who should be
+included to use the same RuneLite Party.
 
 The plugin does not read or collect login details, account/session data, private
 messages, or real-world personal information. Party data is sent only through

@@ -746,6 +746,65 @@ public class CoxMegascalePluginTest
     }
 
     @Test
+    public void totalsPrepOnlyAcrossCompatibleCurrentPartyMembers()
+    {
+        CoxMegascaleState state = new CoxMegascaleState();
+        state.updateTeamMember(1L, "First", 0, null, Arrays.asList(), 0, 0, Arrays.asList(), 99,
+            Arrays.asList(new CoxTeamUpdate.ItemCount("Golpar", 12)),
+            Arrays.asList(new CoxTeamUpdate.ItemCount("Overloads", 2)));
+        state.updateTeamMember(2L, "Second", 0, null, Arrays.asList(), 0, 0, Arrays.asList(), 99,
+            Arrays.asList(new CoxTeamUpdate.ItemCount("Golpar", 18)),
+            Arrays.asList(new CoxTeamUpdate.ItemCount("Overloads", 3)));
+        state.updateTeamMember(3L, "Outside raid", 0, null, Arrays.asList(), 0, 0, Arrays.asList(), 99,
+            Arrays.asList(new CoxTeamUpdate.ItemCount("Golpar", 999)),
+            Arrays.asList(new CoxTeamUpdate.ItemCount("Overloads", 999)));
+        state.clearTeamMemberCoxData(3L, "Outside raid");
+        state.updateSharedStorage(Arrays.asList(
+            new CoxTeamUpdate.ItemCount("Golpar", 100), new CoxTeamUpdate.ItemCount("Overloads", 100)), 1_000L);
+
+        assertEquals(30, state.getTeamPrepResourceTotal("Golpar"));
+        assertEquals(5, state.getTeamCraftedPotionTotal("Overloads"));
+    }
+
+    @Test
+    public void teamPrepTargetsCoverAllConfiguredOlmKillers()
+    {
+        CoxMegascaleState state = new CoxMegascaleState();
+        state.setOlmKillers(3);
+        state.setSipsToCap(505);
+        state.setRevitalisationTarget(12);
+        state.setXericsAidTarget(16);
+        state.setPrayerEnhanceOverride(6);
+
+        assertEquals(43, state.getOverloadsPerKiller());
+        assertEquals(129, state.getTotalOverloadsNeeded());
+        assertEquals(129, state.getTeamTarget(state.getResources().get(0)));
+        assertEquals(387, state.getTeamTarget(state.getResources().get(1)));
+        assertEquals(34, state.getTeamTarget(state.getResources().get(2)));
+        assertEquals(141, state.getTeamTarget(state.getResources().get(3)));
+        assertEquals(145, state.getTeamTarget(state.getResources().get(4)));
+        assertEquals(135, state.getTeamTarget(state.getResources().get(5)));
+    }
+
+    @Test
+    public void hostileTeamPrepTotalsSaturateInsteadOfOverflowing()
+    {
+        CoxMegascaleState state = new CoxMegascaleState();
+        java.util.List<CoxTeamUpdate.ItemCount> resources = Arrays.asList(
+            new CoxTeamUpdate.ItemCount("Golpar", 1_000_000));
+        java.util.List<CoxTeamUpdate.ItemCount> potions = Arrays.asList(
+            new CoxTeamUpdate.ItemCount("Overloads", 1_000_000));
+        for (long memberId = 1; memberId <= 2_200; memberId++)
+        {
+            state.updateTeamMember(memberId, "Raider", 0, null, Arrays.asList(), 0, 0, Arrays.asList(), 99,
+                resources, potions);
+        }
+
+        assertEquals(Integer.MAX_VALUE, state.getTeamPrepResourceTotal("Golpar"));
+        assertEquals(Integer.MAX_VALUE, state.getTeamCraftedPotionTotal("Overloads"));
+    }
+
+    @Test
     public void recordsAnEmptySharedStorageSnapshotWhenItsTabIsOpened()
     {
         CoxMegascaleState state = new CoxMegascaleState();

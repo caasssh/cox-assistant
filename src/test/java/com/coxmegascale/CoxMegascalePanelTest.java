@@ -1,5 +1,6 @@
 package com.coxmegascale;
 
+import com.coxmegascale.calc.RaidMath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -289,6 +290,45 @@ public class CoxMegascalePanelTest
     }
 
     @Test
+    public void teamPrepShowsPartyScopedTotalBeforeSharedStorage() throws Exception
+    {
+        CoxMegascaleState state = new CoxMegascaleState();
+        state.updateTeamMember(1L, "First", 0, null, Arrays.asList(), 0, 0, Arrays.asList(), 99,
+            Arrays.asList(new com.coxmegascale.party.CoxTeamUpdate.ItemCount("Golpar", 12)),
+            Arrays.asList(new com.coxmegascale.party.CoxTeamUpdate.ItemCount("Overloads", 2)));
+        state.updateTeamMember(2L, "Second", 0, null, Arrays.asList(), 0, 0, Arrays.asList(), 99,
+            Arrays.asList(new com.coxmegascale.party.CoxTeamUpdate.ItemCount("Golpar", 18)),
+            Arrays.asList(new com.coxmegascale.party.CoxTeamUpdate.ItemCount("Overloads", 3)));
+        CoxMegascalePanel panel = new CoxMegascalePanel(100, 0, 75, state, () -> { }, mock(SkillIconManager.class));
+
+        renderTab(panel, "Team");
+
+        JButton total = findButton(panel, "Total");
+        JButton shared = findButton(panel, "Shared");
+        assertNotNull(total);
+        assertNotNull(shared);
+        assertEquals(total.getParent(), shared.getParent());
+        assertTrue(total.getParent().getComponentZOrder(total) < shared.getParent().getComponentZOrder(shared));
+        assertTrue(hasToolTip(panel, "Golpar held or used by compatible members in this RuneLite Party / target"));
+        assertTrue(hasExactLabel(panel, RaidMath.formatInteger(30) + "/" + RaidMath.formatInteger(state.getTeamTarget(
+            state.getResources().stream().filter(resource -> "Golpar".equals(resource.key)).findFirst().orElseThrow(AssertionError::new)))));
+        assertTrue(hasExactLabel(panel, RaidMath.formatInteger(5) + "/" + RaidMath.formatInteger(state.getTotalOverloadsNeeded())));
+    }
+
+    @Test
+    public void teamPrepTotalWaitsForCompatibleCoxData() throws Exception
+    {
+        CoxMegascaleState state = new CoxMegascaleState();
+        state.clearTeamMemberCoxData(1L, null);
+        CoxMegascalePanel panel = new CoxMegascalePanel(100, 0, 75, state, () -> { }, mock(SkillIconManager.class));
+
+        renderTab(panel, "Team");
+
+        assertNotNull(findButton(panel, "Total"));
+        assertTrue(hasExactLabel(panel, "Waiting for CoX data"));
+    }
+
+    @Test
     public void prepSpinnersUseThreeDigitPotionBoundsAndFishingException() throws Exception
     {
         CoxMegascalePanel panel = new CoxMegascalePanel(100, 0, 75, new CoxMegascaleState(), () -> { }, mock(SkillIconManager.class));
@@ -505,6 +545,31 @@ public class CoxMegascalePanelTest
             }
         }
         return null;
+    }
+
+    private static void renderTab(CoxMegascalePanel panel, String tab) throws Exception
+    {
+        Field selectedTab = CoxMegascalePanel.class.getDeclaredField("selectedTab");
+        selectedTab.setAccessible(true);
+        Method refresh = CoxMegascalePanel.class.getDeclaredMethod("refreshSelectedTab");
+        refresh.setAccessible(true);
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        SwingUtilities.invokeAndWait(() ->
+        {
+            try
+            {
+                selectedTab.set(panel, tab);
+                refresh.invoke(panel);
+            }
+            catch (Throwable throwable)
+            {
+                failure.set(throwable);
+            }
+        });
+        if (failure.get() != null)
+        {
+            throw new AssertionError(failure.get());
+        }
     }
 
     private static boolean hasToolTip(Container parent, String text)

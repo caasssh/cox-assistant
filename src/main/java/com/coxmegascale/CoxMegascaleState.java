@@ -212,7 +212,7 @@ public class CoxMegascaleState
 
     public int getTotalOverloadsNeeded()
     {
-        return getOverloadsPerKiller() * olmKillers;
+        return saturatedInt((long) getOverloadsPerKiller() * olmKillers);
     }
 
     public int getBuchuTarget()
@@ -222,31 +222,41 @@ public class CoxMegascaleState
 
     public int getTarget(Resource resource)
     {
+        return prepTarget(resource, getOverloadsPerKiller());
+    }
+
+    public int getTeamTarget(Resource resource)
+    {
+        return prepTarget(resource, getTotalOverloadsNeeded());
+    }
+
+    private int prepTarget(Resource resource, int overloadTarget)
+    {
         // Secondary targets include ingredients consumed by planned overloads;
         // herb targets reflect finished potion requirements.
         if ("Noxifer".equals(resource.key))
         {
-            return getOverloadsPerKiller();
+            return overloadTarget;
         }
         if ("Golpar".equals(resource.key))
         {
-            return getOverloadsPerKiller() * 3;
+            return saturatedInt((long) overloadTarget * 3);
         }
         if ("Buchu".equals(resource.key))
         {
-            return getBuchuTarget();
+            return saturatedInt((long) revitalisationTarget + xericsAidTarget + getPrayerEnhanceTarget());
         }
         if ("Stinkhorn".equals(resource.key))
         {
-            return revitalisationTarget + getOverloadsPerKiller();
+            return saturatedInt((long) revitalisationTarget + overloadTarget);
         }
         if ("Endarkened".equals(resource.key))
         {
-            return xericsAidTarget + getOverloadsPerKiller();
+            return saturatedInt((long) xericsAidTarget + overloadTarget);
         }
         if ("Cicely".equals(resource.key))
         {
-            return getPrayerEnhanceTarget() + getOverloadsPerKiller();
+            return saturatedInt((long) getPrayerEnhanceTarget() + overloadTarget);
         }
         if ("Cave worms".equals(resource.key))
         {
@@ -1110,6 +1120,32 @@ public class CoxMegascaleState
     public List<TeamMember> getTeamMembers()
     {
         return Collections.unmodifiableList(new ArrayList<>(teamMembers.values()));
+    }
+
+    public int getTeamPrepResourceTotal(String resource)
+    {
+        long total = 0;
+        for (TeamMember member : teamMembers.values())
+        {
+            if (member.hasCoxData)
+            {
+                total += member.getPrepResourceCount(resource);
+            }
+        }
+        return saturatedInt(total);
+    }
+
+    public int getTeamCraftedPotionTotal(String potion)
+    {
+        long total = 0;
+        for (TeamMember member : teamMembers.values())
+        {
+            if (member.hasCoxData)
+            {
+                total += member.getCraftedPotionCount(potion);
+            }
+        }
+        return saturatedInt(total);
     }
 
     public boolean hasTeamThievingTotal()

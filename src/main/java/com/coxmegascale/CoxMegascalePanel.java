@@ -1209,6 +1209,15 @@ public class CoxMegascalePanel extends PluginPanel
             }
 
             JPanel prep = addCollapsibleSection(panel, "Prep");
+            JPanel total = addCollapsibleSection(prep, "Prep:total", "Total");
+            if (raidMembers.isEmpty())
+            {
+                addRow(total, "Status", "Waiting for CoX data");
+            }
+            else
+            {
+                buildTeamPrepTotalSection(total);
+            }
             JPanel shared = addCollapsibleSection(prep, "Prep:shared", "Shared");
             if (!state.hasSharedStorageSnapshot())
             {
@@ -1416,6 +1425,45 @@ public class CoxMegascalePanel extends PluginPanel
             itemCount++;
         }
         addPrepGrid(prep, items, itemCount);
+    }
+
+    private void buildTeamPrepTotalSection(JPanel prep)
+    {
+        JPanel items = prepGrid();
+        for (CoxMegascaleState.Resource resource : state.getResources())
+        {
+            if ("Cave worms".equals(resource.key))
+            {
+                continue;
+            }
+            String count = RaidMath.formatInteger(state.getTeamPrepResourceTotal(resource.key)) + "/"
+                + RaidMath.formatInteger(state.getTeamTarget(resource));
+            addPrepIconCell(items, pointIcon(resourceIconFile(resource.key)), count,
+                resource.key + " held or used by compatible members in this RuneLite Party / target");
+        }
+        addTeamPotionTotalCell(items, "revitalisation.png", "Revitalisation", state.getRevitalisationTarget());
+        addTeamPotionTotalCell(items, "xerics_aid.png", "Xeric's Aid", state.getXericsAidTarget());
+        addTeamPotionTotalCell(items, "prayer_enhance.png", "Prayer Enhance", state.getPrayerEnhanceTarget());
+        addTeamPotionTotalCell(items, "elder.png", "Elder", state.getTotalOverloadsNeeded());
+        addTeamPotionTotalCell(items, "kodai.png", "Kodai", state.getTotalOverloadsNeeded());
+        addTeamPotionTotalCell(items, "twisted.png", "Twisted", state.getTotalOverloadsNeeded());
+        addTeamPotionTotalCell(items, "overload.png", "Overloads", state.getTotalOverloadsNeeded());
+        int itemCount = 13;
+        if (state.getCaveWormTarget() > 0)
+        {
+            addPrepIconCell(items, pointIcon(resourceIconFile("Cave worms")),
+                RaidMath.formatInteger(state.getTeamPrepResourceTotal("Cave worms")) + "/"
+                    + RaidMath.formatInteger(state.getCaveWormTarget()),
+                "Cave worms held by compatible members in this RuneLite Party / target");
+            itemCount++;
+        }
+        addPrepGrid(prep, items, itemCount);
+    }
+
+    private void addTeamPotionTotalCell(JPanel items, String icon, String potion, int target)
+    {
+        addPrepIconCell(items, pointIcon(icon), RaidMath.formatInteger(state.getTeamCraftedPotionTotal(potion)) + "/"
+            + RaidMath.formatInteger(target), potion + " made by compatible members in this RuneLite Party / target");
     }
 
     private void addMemberPotionCell(JPanel items, CoxMegascaleState.TeamMember member, String icon, String potion, int target)
