@@ -1,8 +1,11 @@
 package com.coxmegascale;
 
+import java.util.EnumSet;
+import java.util.Set;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
 
 /**
@@ -13,6 +16,25 @@ import net.runelite.client.config.Range;
 public interface CoxMegascaleConfig extends Config
 {
 	String GROUP = "coxmegascale";
+
+	@ConfigSection(
+		name = "Scout notifications",
+		description = "Choose which perfect scout layout families produce a RuneLite notification.",
+		position = 0
+	)
+	String scoutNotifications = "scoutNotifications";
+
+	@ConfigItem(
+		keyName = "notifiedScoutLayouts",
+		name = "Notify for layouts",
+		description = "Select one or more layout families. FS includes FSCC; select only FSCC for an exact FSCC preference.",
+		position = 0,
+		section = scoutNotifications
+	)
+	default Set<ScoutLayout> notifiedScoutLayouts()
+	{
+		return EnumSet.of(ScoutLayout.FSCC);
+	}
 
 	@ConfigItem(
 		keyName = "showInfoBoxes",
