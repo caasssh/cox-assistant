@@ -1133,11 +1133,12 @@ public class CoxMegascalePlugin extends Plugin
 
         state.setScoutedLayout(layoutCode, scoutedRooms);
         updateInfoBoxVisibility();
-        if (state.isPerfectLayout() && !perfectLayoutNotified)
+        if (shouldNotifyForScout(state.isPerfectLayout(), layoutCode, config.notifiedScoutLayouts())
+            && !perfectLayoutNotified)
         {
             perfectLayoutNotified = true;
-            notifier.notify("Perfect CoX layout found: " + layoutCode);
-            client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "CoX Assistant: Perfect layout found: " + layoutCode, null);
+            notifier.notify("Selected CoX scout found: " + layoutCode);
+            client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "CoX Assistant: Selected scout found: " + layoutCode, null);
         }
 
         detector.setDetectedRooms(rooms);
@@ -1165,6 +1166,22 @@ public class CoxMegascalePlugin extends Plugin
     static boolean manualRefreshAllowed(int currentTick, int lastRefreshTick)
     {
         return lastRefreshTick == Integer.MIN_VALUE || currentTick < lastRefreshTick || currentTick - lastRefreshTick >= 100;
+    }
+
+    static boolean shouldNotifyForScout(boolean perfectLayout, String layoutCode, Set<ScoutLayout> selectedLayouts)
+    {
+        if (!perfectLayout || selectedLayouts == null || selectedLayouts.isEmpty())
+        {
+            return false;
+        }
+        for (ScoutLayout layout : selectedLayouts)
+        {
+            if (layout != null && layout.matches(layoutCode))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Subscribe

@@ -165,8 +165,11 @@ in this project’s own model and remain subject to live mechanics validation.
 
 ## Configuration
 
-The RuneLite configuration panel controls infobox visibility and startup
-defaults. Raid-specific options and manual overrides are available in the
+The RuneLite configuration panel controls infobox visibility, startup defaults,
+and which perfect scout layout families produce notifications. **Notify for
+layouts** supports FSCC, FS, and SF as a multi-select setting; FS includes FSCC,
+so select only FSCC when that is the only acceptable floor pattern. Raid-specific
+options and manual overrides are available in the
 plugin's Options tab. Changed startup defaults take effect when the plugin is
 next restarted; the current panel can be changed directly without restarting.
 
