@@ -7,6 +7,8 @@ import com.coxmegascale.party.CoxTeamUpdate;
 import com.coxmegascale.party.MysticsSpecUpdate;
 import com.coxmegascale.calc.DefenceTracker;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.ItemID;
@@ -40,6 +42,30 @@ public class CoxMegascalePluginTest
     {
         PluginDependency dependency = CoxMegascalePlugin.class.getAnnotation(PluginDependency.class);
         assertEquals(RaidsPlugin.class, dependency.value());
+    }
+
+    @Test
+    public void scoutNotificationsRespectSelectedLayoutFamilies()
+    {
+        assertEquals(true, CoxMegascalePlugin.shouldNotifyForScout(true, "FSCCSPCPSF",
+            EnumSet.of(ScoutLayout.FSCC)));
+        assertEquals(true, CoxMegascalePlugin.shouldNotifyForScout(true, "FSCCSPCPSF",
+            EnumSet.of(ScoutLayout.FS)));
+        assertEquals(true, CoxMegascalePlugin.shouldNotifyForScout(true, "SFCCSPCPSF",
+            EnumSet.of(ScoutLayout.SF)));
+        assertEquals(false, CoxMegascalePlugin.shouldNotifyForScout(true, "SFCCSPCPSF",
+            EnumSet.of(ScoutLayout.FSCC)));
+    }
+
+    @Test
+    public void scoutNotificationsRequireAPerfectScoutAndASelection()
+    {
+        assertEquals(false, CoxMegascalePlugin.shouldNotifyForScout(false, "FSCCSPCPSF",
+            EnumSet.of(ScoutLayout.FSCC)));
+        assertEquals(false, CoxMegascalePlugin.shouldNotifyForScout(true, "FSCCSPCPSF",
+            Collections.emptySet()));
+        assertEquals(false, CoxMegascalePlugin.shouldNotifyForScout(true, null,
+            EnumSet.of(ScoutLayout.FSCC)));
     }
 
     @Test
