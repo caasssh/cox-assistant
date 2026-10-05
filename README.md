@@ -110,8 +110,8 @@ private messages, or Party payloads.
 
 The logger keeps at most 100 files per raid-mode folder. Disable logging to stop
 new records; delete the `point-fixtures` folder to remove existing records.
-The plugin never uploads logs automatically. Use **Options → View logs** to open
-the local CoX Assistant folder. Review every file before sharing it. Upload
+The plugin never uploads logs automatically. Open the local CoX Assistant
+folder from your RuneLite directory to review files before sharing them. Upload
 **only `.jsonl` files from `point-fixtures`** to the **`#point-data`** channel in
 the [CoX Assistant Discord](https://discord.gg/w5Bm6jsVZS). Never upload files
 from `raid-logs`; those summaries can contain every participant display name

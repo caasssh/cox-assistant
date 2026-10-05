@@ -121,7 +121,6 @@ public class CoxMegascalePanel extends PluginPanel
     private volatile BufferedImage specialAttackSprite;
     private final boolean showWelcomeOnStartup;
     private final Consumer<Boolean> showWelcomeOnStartupChanged;
-    private final Runnable openLogsDirectory;
     private final JPanel tabBar = new JPanel(new GridLayout(1, 4, 3, 0));
     private final JPanel cards = new JPanel();
     private final CardLayout cardLayout = new CardLayout();
@@ -194,7 +193,7 @@ public class CoxMegascalePanel extends PluginPanel
     )
     {
         this(defaultScale, defaultThievingLevel, defaultFishingLevel, state, clearDetectedRooms,
-            skillIconManager, true, show -> { }, () -> { }, null, null);
+            skillIconManager, true, show -> { }, null, null);
     }
 
     public CoxMegascalePanel(
@@ -209,7 +208,7 @@ public class CoxMegascalePanel extends PluginPanel
     )
     {
         this(defaultScale, defaultThievingLevel, defaultFishingLevel, state, clearDetectedRooms,
-            skillIconManager, showWelcomeOnStartup, showWelcomeOnStartupChanged, () -> { }, null, null);
+            skillIconManager, showWelcomeOnStartup, showWelcomeOnStartupChanged, null, null);
     }
 
     public CoxMegascalePanel(
@@ -221,23 +220,6 @@ public class CoxMegascalePanel extends PluginPanel
         SkillIconManager skillIconManager,
         boolean showWelcomeOnStartup,
         Consumer<Boolean> showWelcomeOnStartupChanged,
-        Runnable openLogsDirectory
-    )
-    {
-        this(defaultScale, defaultThievingLevel, defaultFishingLevel, state, clearDetectedRooms,
-            skillIconManager, showWelcomeOnStartup, showWelcomeOnStartupChanged, openLogsDirectory, null, null);
-    }
-
-    public CoxMegascalePanel(
-        int defaultScale,
-        int defaultThievingLevel,
-        int defaultFishingLevel,
-        CoxMegascaleState state,
-        Runnable clearDetectedRooms,
-        SkillIconManager skillIconManager,
-        boolean showWelcomeOnStartup,
-        Consumer<Boolean> showWelcomeOnStartupChanged,
-        Runnable openLogsDirectory,
         ItemManager itemManager,
         SpriteManager spriteManager
     )
@@ -253,7 +235,6 @@ public class CoxMegascalePanel extends PluginPanel
         this.specialAttackSprite = null;
         this.showWelcomeOnStartup = showWelcomeOnStartup;
         this.showWelcomeOnStartupChanged = showWelcomeOnStartupChanged;
-        this.openLogsDirectory = openLogsDirectory;
         this.defaultScale = defaultScale;
         this.defaultThievingLevel = defaultThievingLevel;
         this.defaultFishingLevel = defaultFishingLevel;
@@ -814,11 +795,6 @@ public class CoxMegascalePanel extends PluginPanel
         welcome.setToolTipText("Open the CoX Assistant welcome, usage, estimates, and testing information.");
         welcome.addActionListener(event -> showWelcomePage());
         addFullWidth(panel, welcome, 32);
-        JButton viewLogs = smallButton("View logs");
-        viewLogs.setToolTipText("Open the CoX Assistant folder containing personal raid logs and anonymous point fixtures.");
-        viewLogs.getAccessibleContext().setAccessibleName("View CoX Assistant logs");
-        viewLogs.addActionListener(event -> openLogsDirectory.run());
-        addFullWidth(panel, viewLogs, 32);
     }
 
     int getFixtureThievingLevel()
