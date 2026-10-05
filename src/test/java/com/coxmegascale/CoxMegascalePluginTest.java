@@ -19,7 +19,6 @@ import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
 import net.runelite.client.party.PartyMember;
 import net.runelite.client.plugins.PluginDependency;
-import net.runelite.client.plugins.raids.RaidsPlugin;
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
@@ -38,10 +37,9 @@ public class CoxMegascalePluginTest
     }
 
     @Test
-    public void declaresBuiltInRaidsPluginDependency()
+    public void doesNotDeclareNonServicePluginDependency()
     {
-        PluginDependency dependency = CoxMegascalePlugin.class.getAnnotation(PluginDependency.class);
-        assertEquals(RaidsPlugin.class, dependency.value());
+        assertEquals(0, CoxMegascalePlugin.class.getAnnotationsByType(PluginDependency.class).length);
     }
 
     @Test

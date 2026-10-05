@@ -66,7 +66,6 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.Notifier;
 import net.runelite.client.RuneLite;
 import net.runelite.client.plugins.Plugin;
-import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.events.PartyChanged;
 import net.runelite.client.party.PartyMember;
@@ -75,7 +74,6 @@ import net.runelite.client.party.WSClient;
 import net.runelite.client.party.messages.UserSync;
 import net.runelite.client.plugins.raids.RoomType;
 import net.runelite.client.plugins.raids.Raid;
-import net.runelite.client.plugins.raids.RaidsPlugin;
 import net.runelite.client.plugins.raids.events.RaidReset;
 import net.runelite.client.plugins.raids.events.RaidScouted;
 import net.runelite.client.ui.ClientToolbar;
@@ -96,7 +94,6 @@ import net.runelite.client.util.Text;
     description = "Informational Chambers of Xeric sidebar for scouting, estimates, points, prep, NPC stats, defence specs, Olm, and Party tracking.",
     tags = {"cox", "chambers", "xeric", "raid", "megascale", "assistant", "scouting", "points", "purple", "prep", "defence", "olm", "party"}
 )
-@PluginDependency(RaidsPlugin.class)
 public class CoxMegascalePlugin extends Plugin
 {
     private static final String SCALED_PARTY_SIZE_LABEL = "Scaled party size:";
